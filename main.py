@@ -178,7 +178,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('7137950292:AAEfB0qjq9QuacocbVMYJZtQRqCl9ISThgg').build()
+    application = ApplicationBuilder().token('TOKEN').build()
 
     start_handler = CommandHandler('start', start)
     questions_handler = CommandHandler('questions', questions_command)
