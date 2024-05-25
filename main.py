@@ -1,8 +1,8 @@
 import logging
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram import Update, KeyboardButton
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes, CallbackQueryHandler
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -31,7 +31,9 @@ FAQ_DATA_RU = {  # First page of Russian FAQ
 FAQ_DATA_UZ = {
     "Shartnoma bo'yicha kontragentimga nisbatan da'vo/qarzim bor. TIACga murojaat qilsam bo'ladimi?": "TIACga arbitraj uchun da’vo arizani yuborishingiz mumkinligini tasdiqlash uchun shartnomangizdagi nizolarni hal qilish qoidalarini koʻrib chiqing. “Har qanday nizolar O‘zbekiston Respublikasi Savdo-sanoat palatasi huzuridagi Toshkent xalqaro arbitraj markazi (TIAC)ning arbitraj qoidalariga muvofiq yakuniy hal etilishi kerak” deb aytib o’tilganmi? Agar ishonchingiz komil bo'lmasa, shartnoma nusxasini info@tiac.uz  elektron manziliga yuboring.",
     "TIACga arbitraj uchun so'rovni qanday topshirishim mumkin?": "Arbitraj uchun so'rovni shu havola orqali yuborishingiz mumkin: https://tiac.webnyaya.com/RFA.",
-    "Mening qo’shimcha savollarim bor. TIAC xodimlari bilan qanday bog'lanishim mumkin?": "Biz barcha so'rovlarga elektron pochta orqali javob beramiz. Qo’shimcha savollaringizni info@tiac.uz  va dbayzakova@tiac.uz  elektron pochta manzillariga yuboring. Siz darhol savollaringizga javob olasiz!", "TIACda arbitraj xarajatlari taxminan qancha?": "Arbitrajga da’vo ariza berishda 400 AQSh dollari miqdorida ro’yxatdan o’tish uchun to'lov olinadi,  taxminiy hakamlik xarajatlarini esa bu yerda hisoblash mumkin: https://tiac.webnyaya.com/calculator.", "TIACning bank hisobi rekvizitlari qanday?": "Hisob raqam nomlanishi:  Toshkent xalqaro arbitraj markazi\n\nO‘zbek so‘mida to‘lovlarni amalga oshirish uchun bank hisob raqami (O‘zbekiston rezidentlari uchun): 20212000505054469001\n\nAQSH dollarida to‘lovlarni amalga oshirish uchun bank hisob raqami (O‘zbekiston  norezidentlar uchun): 20212840105054469001\n\nYevroda to‘lovlarni amalga oshirish uchun bank hisob raqami (O‘zbekiston norezidentlari uchun): 20212978905054469001\n\nBank nomi: OPERU ATB \"KAPITALBANK\"\n\nBank kodi: 00974\n\nINN: 207290595\n\nSWIFT: KACHUZ22",
+    "Mening qo’shimcha savollarim bor. TIAC xodimlari bilan qanday bog'lanishim mumkin?": "Biz barcha so'rovlarga elektron pochta orqali javob beramiz. Qo’shimcha savollaringizni info@tiac.uz  va dbayzakova@tiac.uz  elektron pochta manzillariga yuboring. Siz darhol savollaringizga javob olasiz!",
+    "TIACda arbitraj xarajatlari taxminan qancha?": "Arbitrajga da’vo ariza berishda 400 AQSh dollari miqdorida ro’yxatdan o’tish uchun to'lov olinadi,  taxminiy hakamlik xarajatlarini esa bu yerda hisoblash mumkin: https://tiac.webnyaya.com/calculator.",
+    "TIACning bank hisobi rekvizitlari qanday?": "Hisob raqam nomlanishi:  Toshkent xalqaro arbitraj markazi\n\nO‘zbek so‘mida to‘lovlarni amalga oshirish uchun bank hisob raqami (O‘zbekiston rezidentlari uchun): 20212000505054469001\n\nAQSH dollarida to‘lovlarni amalga oshirish uchun bank hisob raqami (O‘zbekiston  norezidentlar uchun): 20212840105054469001\n\nYevroda to‘lovlarni amalga oshirish uchun bank hisob raqami (O‘zbekiston norezidentlari uchun): 20212978905054469001\n\nBank nomi: OPERU ATB \"KAPITALBANK\"\n\nBank kodi: 00974\n\nINN: 207290595\n\nSWIFT: KACHUZ22",
     # ... more FAQs in Uzbek
 }
 
@@ -52,19 +54,41 @@ ELSE_MESSAGES = {
     "ru": "Могу ли я помочь вам с чем-нибудь еще?",
     "uz": "Yana biron narsa bilan yordam bera olamanmi?",
 }
+
+# Ask me a question from the menu: translations
+MENU_MESSAGES = {
+    "en": "Ask me a question from the menu:",
+    "ru": "Задайте мне вопрос из меню:",
+    "uz": "Menudan savol bering:",
+}
+
+# Start message: translations
+START_MESSAGES = {
+    "en": "Welcome to the TIAC Telegram Chat!",
+}
+
+# "I don't have an answer to this question, kindly send all other queries to info@tiac.uz and dbayzakova@tiac.uz and we will respond promptly." language based responses
+FALLBACK_MESSAGES = {
+    "en": "I don't have an answer to this question, kindly send all other queries to info@tiac.uz and bayzakova@tiac.uz and we will respond promptly.",
+    "ru": "У меня нет ответа на этот вопрос, все остальные вопросы просим присылать на info@tiac.uz и bayzakova@tiac.uz и мы оперативно ответим.",
+    "uz": "Bu savolga javobim yo'q, qolgan barcha so'rovlaringizni info@tiac.uz va bayzakova@tiac.uz manzillariga yuboring, biz zudlik bilan javob beramiz.",
+}
+
 WELCOME_MESSAGES = {
     "en": "You're welcome! Feel free to ask again if you have more questions.",
     "ru": "Пожалуйста! Не стесняйтесь спрашивать снова, если у вас есть еще вопросы.",
     "uz": "Arzimaydi! Agar boshqa savollaringiz bo'lsa, yana so'rashingiz mumkin.",
 }
+
 END_MESSAGE = "That's all! Thank you!"
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await language_command(update, context)
 
 
 async def questions_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await show_menu(update, context, "Ask me a question from the menu:")
+    await show_menu(update, context, MENU_MESSAGES.get(context.user_data.get("language", "en"), END_MESSAGE))
 
 
 async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -72,7 +96,9 @@ async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [KeyboardButton("English"), KeyboardButton("Русский"), KeyboardButton("O'zbekcha")]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
-    await update.message.reply_text("Choose your language:", reply_markup=reply_markup)
+    await update.message.reply_text(
+        "To proceed, please selected desired language.\n\nЧтобы продолжить, выберите желаемую локаль.\n\nDavom etish uchun kerakli tilni tanlang.",
+        reply_markup=reply_markup)
 
 
 async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -87,15 +113,15 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if language in language_codes:
         language_code = language_codes[language]
         context.user_data["language"] = language_code
-        await update.message.reply_text(
-            f"Language set to {language}.",
-            reply_markup=ReplyKeyboardRemove()
-        )
+        menu_message = MENU_MESSAGES.get(context.user_data.get("language", "en"), END_MESSAGE)
+        if language_code == "en":
+            await update.message.reply_text("Language set to English.")
+        elif language_code == "ru":
+            await update.message.reply_text("Язык установлен на русский.")
+        elif language_code == "uz":
+            await update.message.reply_text("Til o'zbek tiliga sozlandi.")
 
-        if context.user_data.get("last_command") == "questions":
-            await questions_command(update, context)
-        else:
-            await show_menu(update, context, "Ask me a question from the menu:")
+        await show_menu(update, context, menu_message)
 
     else:
         await update.message.reply_text("Invalid language selection. Please choose from the available options.")
@@ -106,9 +132,14 @@ async def answer_faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
     end_message = END_MESSAGES.get(context.user_data.get("language", "en"), END_MESSAGE)
     else_message = ELSE_MESSAGES.get(context.user_data.get("language", "en"), END_MESSAGE)
     welcome_message = WELCOME_MESSAGES.get(context.user_data.get("language", "en"), END_MESSAGE)
+    fallback_message = FALLBACK_MESSAGES.get(context.user_data.get("language", "en"), END_MESSAGE)
 
     if question == end_message:
-        await update.message.reply_text(welcome_message, reply_markup=ReplyKeyboardRemove())
+        keyboard = [[InlineKeyboardButton("Questions", callback_data='/questions'),
+                     InlineKeyboardButton("Language", callback_data='/language')]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+
     else:
         faq_data = get_faq_data(context)
         answer = faq_data.get(question)
@@ -116,7 +147,7 @@ async def answer_faq(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(answer)
             await show_menu(update, context, else_message)  # use else_message
         else:
-            await update.message.reply_text("I don't have an answer for that question. Try another one.")
+            await update.message.reply_text(fallback_message)
             await show_menu(update, context, else_message)  # use else_message
 
 
@@ -127,8 +158,8 @@ async def show_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, message_
     ]
     keyboard.append([KeyboardButton(END_MESSAGES.get(context.user_data.get("language", "en"), END_MESSAGE))])
 
-    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
-    await update.message.reply_text(text=message_text, reply_markup=reply_markup)
+    reply_markup_sm = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
+    await update.message.reply_text(text=message_text, reply_markup=reply_markup_sm)
 
 
 def get_faq_data(context: ContextTypes.DEFAULT_TYPE):
@@ -136,19 +167,31 @@ def get_faq_data(context: ContextTypes.DEFAULT_TYPE):
     return FAQ_DATA.get(language, {})
 
 
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == '/questions':
+        await questions_command(update, context)
+    else:
+        await language_command(update, context)
+
+
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('TOKEN').build()
+    application = ApplicationBuilder().token('7137950292:AAEfB0qjq9QuacocbVMYJZtQRqCl9ISThgg').build()
 
     start_handler = CommandHandler('start', start)
     questions_handler = CommandHandler('questions', questions_command)
     language_handler = CommandHandler('language', language_command)
     set_language_handler = MessageHandler(filters.Regex(r'^(English|Русский|O\'zbekcha)$'), set_language)
     answer_faq_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), answer_faq)  # modified handler
+    button_callback_handler = CallbackQueryHandler(button)
 
     application.add_handler(start_handler)
     application.add_handler(questions_handler)
     application.add_handler(language_handler)
     application.add_handler(set_language_handler)
     application.add_handler(answer_faq_handler)
+    application.add_handler(button_callback_handler)  # Add button handler
 
     application.run_polling()
