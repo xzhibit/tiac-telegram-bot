@@ -96,7 +96,12 @@ async def language_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [KeyboardButton("English"), KeyboardButton("Русский"), KeyboardButton("O'zbekcha")]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
-    await update.message.reply_text(
+    if update.callback_query:
+        await update.callback_query.message.reply_text(
+        "To proceed, please selected desired language.\n\nЧтобы продолжить, выберите желаемую локаль.\n\nDavom etish uchun kerakli tilni tanlang.",
+        reply_markup=reply_markup)
+    else:
+        await update.message.reply_text(
         "To proceed, please selected desired language.\n\nЧтобы продолжить, выберите желаемую локаль.\n\nDavom etish uchun kerakli tilni tanlang.",
         reply_markup=reply_markup)
 
@@ -159,7 +164,10 @@ async def show_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, message_
     keyboard.append([KeyboardButton(END_MESSAGES.get(context.user_data.get("language", "en"), END_MESSAGE))])
 
     reply_markup_sm = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
-    await update.message.reply_text(text=message_text, reply_markup=reply_markup_sm)
+    if update.callback_query:
+        await update.callback_query.message.reply_text(text=message_text, reply_markup=reply_markup_sm)
+    else:
+        await update.message.reply_text(text=message_text, reply_markup=reply_markup_sm)
 
 
 def get_faq_data(context: ContextTypes.DEFAULT_TYPE):
@@ -178,7 +186,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 if __name__ == '__main__':
-    application = ApplicationBuilder().token('TOKEN').build()
+    application = ApplicationBuilder().token('7137950292:AAEfB0qjq9QuacocbVMYJZtQRqCl9ISThgg').build()
 
     start_handler = CommandHandler('start', start)
     questions_handler = CommandHandler('questions', questions_command)
